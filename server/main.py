@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from itertools import count
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
@@ -28,6 +29,11 @@ DEFAULT_LEAD_TIME_DAYS = 14
 # Restock orders live in-memory only — they reset on server restart,
 # matching the rest of the mock-data approach in this demo app.
 restock_orders: list = []
+
+# User tasks (from the "My Tasks" modal) also live in-memory only.
+# The id counter is monotonic so ids stay unique even after deletions.
+tasks: list = []
+task_id_counter = count(1)
 
 def filter_by_month(items: list, month: Optional[str]) -> list:
     """Filter items by month/quarter based on order_date field"""
@@ -165,6 +171,19 @@ class RestockOrder(BaseModel):
 class CreateRestockOrderRequest(BaseModel):
     items: List[RestockOrderLineItem]
 
+# Task fields use camelCase (dueDate) to match the payload the frontend already sends
+class Task(BaseModel):
+    id: str
+    title: str
+    priority: str
+    dueDate: str
+    status: str
+
+class CreateTaskRequest(BaseModel):
+    title: str
+    priority: str = "medium"
+    dueDate: str
+
 # API endpoints
 @app.get("/")
 def root():
@@ -273,12 +292,22 @@ def get_recent_transactions():
     return recent_transactions
 
 @app.get("/api/reports/quarterly")
-def get_quarterly_reports():
-    """Get quarterly performance reports"""
+def get_quarterly_reports(
+    warehouse: Optional[str] = None,
+    category: Optional[str] = None,
+    status: Optional[str] = None,
+    month: Optional[str] = None
+):
+    """Get quarterly performance reports with optional filtering"""
+    # Apply the same global filters used by the other endpoints so the
+    # Reports page stays consistent with the filter bar
+    filtered_orders = apply_filters(orders, warehouse, category, status)
+    filtered_orders = filter_by_month(filtered_orders, month)
+
     # Calculate quarterly statistics from orders
     quarters = {}
 
-    for order in orders:
+    for order in filtered_orders:
         order_date = order.get('order_date', '')
         # Determine quarter
         if '2025-01' in order_date or '2025-02' in order_date or '2025-03' in order_date:
@@ -319,11 +348,19 @@ def get_quarterly_reports():
     return result
 
 @app.get("/api/reports/monthly-trends")
-def get_monthly_trends():
-    """Get month-over-month trends"""
+def get_monthly_trends(
+    warehouse: Optional[str] = None,
+    category: Optional[str] = None,
+    status: Optional[str] = None,
+    month: Optional[str] = None
+):
+    """Get month-over-month trends with optional filtering"""
+    filtered_orders = apply_filters(orders, warehouse, category, status)
+    filtered_orders = filter_by_month(filtered_orders, month)
+
     months = {}
 
-    for order in orders:
+    for order in filtered_orders:
         order_date = order.get('order_date', '')
         if not order_date:
             continue
@@ -448,6 +485,47 @@ def create_restock_order(req: CreateRestockOrderRequest):
 def list_restock_orders():
     """Return all submitted restock orders in insertion order."""
     return restock_orders
+
+
+@app.get("/api/tasks", response_model=List[Task])
+def get_tasks():
+    """Get all user-created tasks"""
+    return tasks
+
+
+@app.post("/api/tasks", response_model=Task)
+def create_task(req: CreateTaskRequest):
+    """Create a new task"""
+    new_task = {
+        # Prefixed id avoids colliding with the numeric ids of the mock tasks bundled in the frontend
+        "id": f"task-{next(task_id_counter)}",
+        "title": req.title,
+        "priority": req.priority,
+        "dueDate": req.dueDate,
+        "status": "pending",
+    }
+    tasks.append(new_task)
+    return new_task
+
+
+@app.patch("/api/tasks/{task_id}", response_model=Task)
+def toggle_task(task_id: str):
+    """Toggle a task between pending and completed"""
+    task = next((t for t in tasks if t["id"] == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    task["status"] = "completed" if task["status"] == "pending" else "pending"
+    return task
+
+
+@app.delete("/api/tasks/{task_id}")
+def delete_task(task_id: str):
+    """Delete a task"""
+    task = next((t for t in tasks if t["id"] == task_id), None)
+    if not task:
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    tasks.remove(task)
+    return {"message": f"Task {task_id} deleted"}
 
 
 if __name__ == "__main__":

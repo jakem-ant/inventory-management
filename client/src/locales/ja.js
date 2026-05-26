@@ -6,6 +6,9 @@ export default {
     orders: '注文',
     finance: '財務',
     demandForecast: '需要予測',
+    restocking: '補充',
+    reports: 'レポート',
+    backlog: 'バックログ',
     companyName: '触媒コンポーネンツ',
     subtitle: '在庫管理システム'
   },
@@ -188,6 +191,59 @@ export default {
     }
   },
 
+  // Reports
+  reports: {
+    title: '業績レポート',
+    description: '四半期業績指標と月次トレンドを表示',
+    quarterlyPerformance: '四半期業績',
+    monthlyRevenueTrend: '月別収益推移',
+    monthOverMonth: '前月比分析',
+    totalRevenue: '総収益',
+    avgMonthlyRevenue: '月平均収益',
+    totalOrders: '総注文数',
+    bestQuarter: '最高業績四半期',
+    loading: 'レポートを読み込み中...',
+    loadError: 'レポートの読み込みに失敗しました',
+    table: {
+      quarter: '四半期',
+      totalOrders: '総注文数',
+      totalRevenue: '総収益',
+      avgOrderValue: '平均注文額',
+      fulfillmentRate: '履行率',
+      month: '月',
+      orders: '注文数',
+      revenue: '収益',
+      change: '変化',
+      growthRate: '成長率'
+    }
+  },
+
+  // Backlog
+  backlog: {
+    title: 'バックログ管理',
+    description: '在庫不足の追跡と解決',
+    highPriority: '高優先度',
+    mediumPriority: '中優先度',
+    lowPriority: '低優先度',
+    totalItems: 'バックログ項目数',
+    itemsTitle: 'バックログ項目',
+    noItems: 'バックログはありません - すべての注文を履行できます！',
+    loading: 'バックログを読み込み中...',
+    loadError: 'バックログの読み込みに失敗しました',
+    unitsShort: '単位不足',
+    days: '日',
+    table: {
+      orderId: '注文ID',
+      sku: 'SKU',
+      itemName: '品目名',
+      quantityNeeded: '必要数量',
+      quantityAvailable: '在庫数量',
+      shortage: '不足',
+      daysDelayed: '遅延日数',
+      priority: '優先度'
+    }
+  },
+
   // Filters
   filters: {
     timePeriod: '期間',
@@ -195,7 +251,8 @@ export default {
     category: 'カテゴリ',
     orderStatus: '注文ステータス',
     all: 'すべて',
-    allMonths: 'すべての月'
+    allMonths: 'すべての月',
+    resetFilters: 'すべてのフィルターをリセット'
   },
 
   // Statuses
@@ -328,6 +385,10 @@ export default {
 
   // Product Names
   productNames: {
+    'Oil Filter Cartridge': 'オイルフィルターカートリッジ',
+    'Electric Motor 5HP': '電動モーター5HP',
+    'Pressure Relief Valve': '圧力リリーフバルブ',
+    'Industrial Widget Type A': '産業用ウィジェットタイプA',
     'Single Layer PCB Assembly': '単層PCB組立',
     'Dual Layer PCB Assembly': '二層PCB組立',
     'Multi Layer PCB Assembly': '多層PCB組立',
