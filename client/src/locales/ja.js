@@ -368,6 +368,13 @@ export default {
     selectLanguage: '言語を選択'
   },
 
+  // Theme
+  theme: {
+    toggle: 'ダークモード切替',
+    light: 'ライトモード',
+    dark: 'ダークモード'
+  },
+
   // Common
   common: {
     loading: '読み込み中...',

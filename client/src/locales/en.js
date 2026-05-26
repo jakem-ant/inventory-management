@@ -368,6 +368,13 @@ export default {
     selectLanguage: 'Select Language'
   },
 
+  // Theme
+  theme: {
+    toggle: 'Toggle dark mode',
+    light: 'Light mode',
+    dark: 'Dark mode'
+  },
+
   // Common
   common: {
     loading: 'Loading...',

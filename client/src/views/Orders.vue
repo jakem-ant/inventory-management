@@ -298,8 +298,8 @@ export default {
   top: 100%;
   left: 0;
   margin-top: 0.5rem;
-  background: white;
-  border: 1px solid #e2e8f0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   padding: 0.75rem;
@@ -313,7 +313,7 @@ export default {
   flex-direction: column;
   gap: 0.25rem;
   padding: 0.5rem;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--bg-surface);
 }
 
 .item-entry:last-child {
@@ -323,16 +323,16 @@ export default {
 .item-name {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #0f172a;
+  color: var(--text-primary);
 }
 
 .item-meta {
   font-size: 0.813rem;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 
 .submitted-orders-card { margin-bottom: 1.5rem; }
-.section-hint { color: #64748b; font-size: 0.875rem; margin: 0 0 1rem 0; padding: 0 1.5rem; }
-.empty-state { padding: 2rem 1.5rem; text-align: center; color: #64748b; font-size: 0.875rem; }
-.plus-more { color: #64748b; font-size: 0.813rem; }
+.section-hint { color: var(--text-secondary); font-size: 0.875rem; margin: 0 0 1rem 0; padding: 0 1.5rem; }
+.empty-state { padding: 2rem 1.5rem; text-align: center; color: var(--text-secondary); font-size: 0.875rem; }
+.plus-more { color: var(--text-secondary); font-size: 0.813rem; }
 </style>

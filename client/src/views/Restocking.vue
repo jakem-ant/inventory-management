@@ -209,7 +209,7 @@ export default {
 .budget-display {
   font-size: 2rem;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary);
   letter-spacing: -0.025em;
 }
 
@@ -222,7 +222,7 @@ export default {
   height: 6px;
   appearance: none;
   -webkit-appearance: none;
-  background: #e2e8f0;
+  background: var(--border-color);
   border-radius: 3px;
   outline: none;
   cursor: pointer;
@@ -261,27 +261,27 @@ export default {
 .budget-slider::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 3px;
-  background: #e2e8f0;
+  background: var(--border-color);
 }
 
 .budget-slider::-moz-range-track {
   height: 6px;
   border-radius: 3px;
-  background: #e2e8f0;
+  background: var(--border-color);
 }
 
 .slider-hint {
   font-size: 0.813rem;
-  color: #94a3b8;
+  color: var(--text-muted);
   margin-top: 0.375rem;
 }
 
 .empty-state-block {
-  border: 2px dashed #e2e8f0;
+  border: 2px dashed var(--border-color);
   border-radius: 8px;
   padding: 2.5rem;
   text-align: center;
-  color: #64748b;
+  color: var(--text-secondary);
   font-size: 0.938rem;
   margin: 0.5rem 0;
 }
