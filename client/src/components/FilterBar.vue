@@ -140,12 +140,19 @@ export default {
 }
 
 .filter-select {
-  padding: 0.4rem 0.75rem;
+  padding: 0.4rem 2rem 0.4rem 0.75rem;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 0.813rem;
   color: #0f172a;
-  background: white;
+  /* The native select arrow hugs the right edge and can't be repositioned,
+     so draw our own chevron inset 0.75rem to mirror the left text padding. */
+  appearance: none;
+  -webkit-appearance: none;
+  background-color: white;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
   cursor: pointer;
   transition: all 0.2s;
   font-weight: 500;
