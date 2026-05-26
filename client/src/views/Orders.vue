@@ -27,6 +27,45 @@
         </div>
       </div>
 
+      <div class="card submitted-orders-card">
+        <div class="card-header">
+          <h3 class="card-title">Submitted Orders — Restocking ({{ restockOrders.length }})</h3>
+        </div>
+        <p class="section-hint">Orders you've placed to replenish stock. Delivery estimates use per-category lead times.</p>
+        <div v-if="restockOrders.length === 0" class="empty-state">
+          No restock orders yet. Head to the Restocking tab to place one.
+        </div>
+        <div v-else class="table-container">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>Order #</th>
+                <th>Items</th>
+                <th>Total Value</th>
+                <th>Order Date</th>
+                <th>Lead Time</th>
+                <th>Expected Delivery</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="o in restockOrders" :key="o.id">
+                <td><strong>{{ o.order_number }}</strong></td>
+                <td>
+                  <span v-if="o.items.length === 1">{{ o.items[0].name }}</span>
+                  <span v-else>{{ o.items[0].name }} <span class="plus-more">+{{ o.items.length - 1 }} more</span></span>
+                </td>
+                <td><strong>{{ currencySymbol }}{{ o.total_value.toLocaleString() }}</strong></td>
+                <td>{{ formatDate(o.order_date) }}</td>
+                <td>{{ o.lead_time_days }} days</td>
+                <td>{{ formatDate(o.expected_delivery) }}</td>
+                <td><span class="badge info">{{ o.status }}</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <h3 class="card-title">{{ t('orders.allOrders') }} ({{ orders.length }})</h3>
@@ -95,6 +134,7 @@ export default {
     const loading = ref(true)
     const error = ref(null)
     const orders = ref([])
+    const restockOrders = ref([])
 
     // Use shared filters
     const {
@@ -153,13 +193,27 @@ export default {
       })
     }
 
-    onMounted(loadOrders)
+    const loadRestockOrders = async () => {
+      try {
+        const fetched = await api.getRestockOrders()
+        // Reverse so newest orders appear first
+        restockOrders.value = [...fetched].reverse()
+      } catch (err) {
+        console.error('Failed to load restock orders:', err)
+      }
+    }
+
+    onMounted(() => {
+      loadOrders()
+      loadRestockOrders()
+    })
 
     return {
       t,
       loading,
       error,
       orders,
+      restockOrders,
       getOrdersByStatus,
       getOrderStatusClass,
       formatDate,
@@ -276,4 +330,9 @@ export default {
   font-size: 0.813rem;
   color: #64748b;
 }
+
+.submitted-orders-card { margin-bottom: 1.5rem; }
+.section-hint { color: #64748b; font-size: 0.875rem; margin: 0 0 1rem 0; padding: 0 1.5rem; }
+.empty-state { padding: 2rem 1.5rem; text-align: center; color: #64748b; font-size: 0.875rem; }
+.plus-more { color: #64748b; font-size: 0.813rem; }
 </style>

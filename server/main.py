@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
@@ -13,6 +14,20 @@ QUARTER_MAP = {
     'Q3-2025': ['2025-07', '2025-08', '2025-09'],
     'Q4-2025': ['2025-10', '2025-11', '2025-12']
 }
+
+# Hardcoded delivery lead times (days) by inventory category.
+# Used when creating restock orders; the slowest category in the order sets overall lead time.
+CATEGORY_LEAD_TIMES_DAYS = {
+    "Circuit Boards": 14,
+    "Sensors": 10,
+    "Actuators": 21,
+    "Controllers": 7,
+}
+DEFAULT_LEAD_TIME_DAYS = 14
+
+# Restock orders live in-memory only — they reset on server restart,
+# matching the rest of the mock-data approach in this demo app.
+restock_orders: list = []
 
 def filter_by_month(items: list, month: Optional[str]) -> list:
     """Filter items by month/quarter based on order_date field"""
@@ -119,6 +134,36 @@ class CreatePurchaseOrderRequest(BaseModel):
     unit_cost: float
     expected_delivery_date: str
     notes: Optional[str] = None
+
+class RestockRecommendation(BaseModel):
+    item_sku: str
+    item_name: str
+    category: str
+    unit_cost: float
+    current_demand: int
+    forecasted_demand: int
+    trend: str
+    recommended_quantity: int
+    line_total: float
+
+class RestockOrderLineItem(BaseModel):
+    sku: str
+    name: str
+    quantity: int
+    unit_cost: float
+
+class RestockOrder(BaseModel):
+    id: str
+    order_number: str
+    items: List[RestockOrderLineItem]
+    total_value: float
+    lead_time_days: int
+    order_date: str
+    expected_delivery: str
+    status: str
+
+class CreateRestockOrderRequest(BaseModel):
+    items: List[RestockOrderLineItem]
 
 # API endpoints
 @app.get("/")
@@ -303,6 +348,107 @@ def get_monthly_trends():
     result = list(months.values())
     result.sort(key=lambda x: x['month'])
     return result
+
+def _build_sku_inventory_map() -> dict:
+    """Collapse multi-warehouse inventory rows to a single SKU→{category, unit_cost} record.
+    First occurrence wins; in the demo data unit_cost is consistent within a SKU."""
+    mapping: dict = {}
+    for item in inventory_items:
+        sku = item["sku"]
+        if sku not in mapping:
+            mapping[sku] = {
+                "category": item["category"],
+                "unit_cost": item["unit_cost"],
+            }
+    return mapping
+
+
+@app.get("/api/restock/recommendations", response_model=List[RestockRecommendation])
+def get_restock_recommendations(budget: float):
+    """Items to restock that fit the given budget.
+    Ranks trend='increasing' first, then by demand gap descending. Greedy-fills to budget.
+    Demand rows without a matching inventory SKU are skipped (no unit_cost to price them)."""
+    if budget <= 0:
+        return []
+
+    sku_map = _build_sku_inventory_map()
+
+    candidates = []
+    for forecast in demand_forecasts:
+        sku = forecast["item_sku"]
+        inv = sku_map.get(sku)
+        if inv is None:
+            continue  # can't price it → can't budget it
+        gap = forecast["forecasted_demand"] - forecast["current_demand"]
+        if gap <= 0:
+            continue  # demand not rising → nothing to restock
+        line_total = round(gap * inv["unit_cost"], 2)
+        candidates.append({
+            "item_sku": sku,
+            "item_name": forecast["item_name"],
+            "category": inv["category"],
+            "unit_cost": inv["unit_cost"],
+            "current_demand": forecast["current_demand"],
+            "forecasted_demand": forecast["forecasted_demand"],
+            "trend": forecast["trend"],
+            "recommended_quantity": gap,
+            "line_total": line_total,
+        })
+
+    # Sort: increasing-trend first (False<True, so invert via not-equal), then bigger gap first.
+    candidates.sort(key=lambda c: (c["trend"] != "increasing", -c["recommended_quantity"]))
+
+    # Greedy fill to budget.
+    picked = []
+    running = 0.0
+    for c in candidates:
+        if running + c["line_total"] <= budget:
+            picked.append(c)
+            running += c["line_total"]
+
+    return picked
+
+
+@app.post("/api/restock/orders", response_model=RestockOrder)
+def create_restock_order(req: CreateRestockOrderRequest):
+    """Create a restock order. Lead time = slowest per-category lead time across line items."""
+    if not req.items:
+        raise HTTPException(status_code=400, detail="Order must contain at least one item")
+
+    sku_map = _build_sku_inventory_map()
+
+    # Slowest category drives the whole-order lead time — one truck, arrives when the last item does.
+    lead_time = DEFAULT_LEAD_TIME_DAYS
+    for line in req.items:
+        inv = sku_map.get(line.sku)
+        category = inv["category"] if inv else None
+        days = CATEGORY_LEAD_TIMES_DAYS.get(category, DEFAULT_LEAD_TIME_DAYS)
+        if days > lead_time:
+            lead_time = days
+
+    now = datetime.now()
+    total_value = round(sum(line.quantity * line.unit_cost for line in req.items), 2)
+    next_id = len(restock_orders) + 1
+
+    new_order = {
+        "id": str(next_id),
+        "order_number": f"RST-2025-{next_id:04d}",
+        "items": [line.model_dump() for line in req.items],
+        "total_value": total_value,
+        "lead_time_days": lead_time,
+        "order_date": now.isoformat(timespec="seconds"),
+        "expected_delivery": (now + timedelta(days=lead_time)).isoformat(timespec="seconds"),
+        "status": "Submitted",
+    }
+    restock_orders.append(new_order)
+    return new_order
+
+
+@app.get("/api/restock/orders", response_model=List[RestockOrder])
+def list_restock_orders():
+    """Return all submitted restock orders in insertion order."""
+    return restock_orders
+
 
 if __name__ == "__main__":
     import uvicorn
