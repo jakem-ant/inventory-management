@@ -121,6 +121,7 @@ class BacklogItem(BaseModel):
     days_delayed: int
     priority: str
     has_purchase_order: Optional[bool] = False
+    purchase_order_id: Optional[str] = None
 
 class PurchaseOrder(BaseModel):
     id: str
@@ -233,15 +234,55 @@ def get_demand_forecasts():
 @app.get("/api/backlog", response_model=List[BacklogItem])
 def get_backlog():
     """Get backlog items with purchase order status"""
-    # Add has_purchase_order flag to each backlog item
+    # Attach purchase order info so the UI can offer Create PO vs View PO per item
     result = []
     for item in backlog_items:
         item_dict = dict(item)
-        # Check if this backlog item has a purchase order
-        has_po = any(po["backlog_item_id"] == item["id"] for po in purchase_orders)
-        item_dict["has_purchase_order"] = has_po
+        po = next((po for po in purchase_orders if po["backlog_item_id"] == item["id"]), None)
+        item_dict["has_purchase_order"] = po is not None
+        item_dict["purchase_order_id"] = po["id"] if po else None
         result.append(item_dict)
     return result
+
+
+@app.get("/api/purchase-orders/{backlog_item_id}", response_model=PurchaseOrder)
+def get_purchase_order_by_backlog_item(backlog_item_id: str):
+    """Get the purchase order associated with a backlog item"""
+    po = next((po for po in purchase_orders if po["backlog_item_id"] == backlog_item_id), None)
+    if not po:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No purchase order found for backlog item {backlog_item_id}"
+        )
+    return po
+
+
+@app.post("/api/purchase-orders", response_model=PurchaseOrder)
+def create_purchase_order(req: CreatePurchaseOrderRequest):
+    """Create a purchase order for a backlog item"""
+    backlog_item = next((b for b in backlog_items if b["id"] == req.backlog_item_id), None)
+    if not backlog_item:
+        raise HTTPException(status_code=404, detail=f"Backlog item {req.backlog_item_id} not found")
+
+    if any(po["backlog_item_id"] == req.backlog_item_id for po in purchase_orders):
+        raise HTTPException(status_code=400, detail="A purchase order already exists for this backlog item")
+
+    if req.quantity <= 0:
+        raise HTTPException(status_code=400, detail="Quantity must be greater than zero")
+
+    new_po = {
+        "id": f"PO-2025-{len(purchase_orders) + 1:04d}",
+        "backlog_item_id": req.backlog_item_id,
+        "supplier_name": req.supplier_name,
+        "quantity": req.quantity,
+        "unit_cost": req.unit_cost,
+        "expected_delivery_date": req.expected_delivery_date,
+        "status": "Submitted",
+        "created_date": datetime.now().isoformat(timespec="seconds"),
+        "notes": req.notes,
+    }
+    purchase_orders.append(new_po)
+    return new_po
 
 @app.get("/api/dashboard/summary")
 def get_dashboard_summary(
