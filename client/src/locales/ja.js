@@ -58,7 +58,10 @@ export default {
       daysDelayed: '遅延日数',
       priority: '優先度',
       unitsShort: '単位不足',
-      days: '日'
+      days: '日',
+      actions: 'アクション',
+      createPO: '発注作成',
+      viewPO: '発注確認'
     },
     topProducts: {
       title: '収益別トップ製品',
@@ -216,6 +219,33 @@ export default {
       change: '変化',
       growthRate: '成長率'
     }
+  },
+
+  // Purchase Orders
+  purchaseOrder: {
+    createTitle: '発注書を作成',
+    viewTitle: '発注書の詳細',
+    poNumber: '発注番号',
+    item: '品目',
+    sku: 'SKU',
+    shortage: '不足',
+    supplier: 'サプライヤー',
+    supplierPlaceholder: 'サプライヤー名を入力...',
+    quantity: '数量',
+    unitCost: '単価（米ドル）',
+    expectedDelivery: '予定納期',
+    notes: '備考',
+    notesPlaceholder: '備考（任意）...',
+    totalCost: '合計金額',
+    status: 'ステータス',
+    statusSubmitted: '発注済み',
+    createdDate: '作成日',
+    submit: '発注書を作成',
+    creating: '作成中...',
+    loading: '発注書を読み込み中...',
+    createError: '発注書の作成に失敗しました',
+    loadError: '発注書の読み込みに失敗しました',
+    unitsShort: '単位不足'
   },
 
   // Backlog

@@ -58,7 +58,10 @@ export default {
       daysDelayed: 'Days Delayed',
       priority: 'Priority',
       unitsShort: 'units short',
-      days: 'days'
+      days: 'days',
+      actions: 'Actions',
+      createPO: 'Create PO',
+      viewPO: 'View PO'
     },
     topProducts: {
       title: 'Top Products by Revenue',
@@ -216,6 +219,33 @@ export default {
       change: 'Change',
       growthRate: 'Growth Rate'
     }
+  },
+
+  // Purchase Orders
+  purchaseOrder: {
+    createTitle: 'Create Purchase Order',
+    viewTitle: 'Purchase Order Details',
+    poNumber: 'PO Number',
+    item: 'Item',
+    sku: 'SKU',
+    shortage: 'Shortage',
+    supplier: 'Supplier',
+    supplierPlaceholder: 'Enter supplier name...',
+    quantity: 'Quantity',
+    unitCost: 'Unit Cost (USD)',
+    expectedDelivery: 'Expected Delivery',
+    notes: 'Notes',
+    notesPlaceholder: 'Optional notes...',
+    totalCost: 'Total Cost',
+    status: 'Status',
+    statusSubmitted: 'Submitted',
+    createdDate: 'Created Date',
+    submit: 'Create Purchase Order',
+    creating: 'Creating...',
+    loading: 'Loading purchase order...',
+    createError: 'Failed to create purchase order',
+    loadError: 'Failed to load purchase order',
+    unitsShort: 'units short'
   },
 
   // Backlog
